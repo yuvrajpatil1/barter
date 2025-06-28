@@ -20,9 +20,7 @@
           "bundle": false,
           "main": "apps/auth-service/src/main.ts",
           "tsConfig": "apps/auth-service/tsconfig.app.json",
-          "assets": [
-            "apps/auth-service/src/assets"
-          ],
+          "assets": [],
           "esbuildOptions": {
             "sourcemap": true,
             "outExtension": {
@@ -74,5 +72,8 @@
         "command": "docker build -f apps/auth-service/Dockerfile . -t auth-service"
       }
     }
+  },
+  "dependencies": {
+    "swagger-autogen": "^2.23.7"
   }
 }
