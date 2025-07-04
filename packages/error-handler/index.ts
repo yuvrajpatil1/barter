@@ -33,7 +33,7 @@ export class ValidationError extends AppError {
 
 //Authentication error
 export class AuthError extends AppError {
-  constructor(message: "Unauthorized") {
+  constructor(message: string = "Unauthorized") {
     super(message, 401);
   }
 }

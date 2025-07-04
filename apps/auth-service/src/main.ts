@@ -82,9 +82,7 @@ const port = process.env.PORT || 6001;
 const server = app.listen(port, () => {
   console.log(`🚀 Auth service is running on http://localhost:${port}/api`);
   if (swaggerAvailable) {
-    console.log(
-      `📚 Swagger Docs available at http://localhost:${port}/api-docs`
-    );
+    console.log(`📚 Swagger Docs available at http://localhost:${port}/docs`);
   } else {
     console.log(
       "📚 Swagger documentation not available (service will work without it)"
