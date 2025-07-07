@@ -129,7 +129,7 @@ export const handleForgotPassword = async (
     await trackOtpRequests(email, next);
 
     //generate otp and send email
-    await sendOtp(email, user.name, "forgot-password-user-mail");
+    await sendOtp(user.name, email, "forgot-password-user-mail");
 
     res
       .status(200)
@@ -149,12 +149,11 @@ export const verifyForgotPasswordOtp = async (
 
     if (!email || !otp) {
       return next(new ValidationError("Email and new otp are required!"));
-
-      await verifyOtp(email, otp, next);
-
-      res
-        .status(200)
-        .json({ message: "OTP verified. You can now reset your password!" });
     }
+    await verifyOtp(email, otp, next);
+
+    res
+      .status(200)
+      .json({ message: "OTP verified. You can now reset your password!" });
   } catch (error) {}
 };

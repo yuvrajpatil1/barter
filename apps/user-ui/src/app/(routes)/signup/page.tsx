@@ -102,7 +102,11 @@ function Signup() {
     }
   };
 
-  const resendOtp = () => {};
+  const resendOtp = () => {
+    if (userData) {
+      signupMutation.mutate(userData);
+    }
+  };
 
   return (
     <div className="w-full py-10 min-h-[85vh] bg-[#f1f1f1]">
