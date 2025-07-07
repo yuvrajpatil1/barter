@@ -37,7 +37,7 @@ function Login() {
             Login to Barter
           </h3>
           <p className="text-center mb-4 text-gray-500">
-            Dont have an account?{" "}
+            Don't have an account?{" "}
             <Link href={"/signup"} className="text-blue-500">
               Sign up
             </Link>
