@@ -1,7 +1,7 @@
 import Header from "@/shared/widgets/header/header";
 import "./global.css";
 import { Inter, Roboto } from "next/font/google";
-import Providers from "./providers";
+import Provider from "./provider";
 
 export const metadata = {
   title: "Barter",
@@ -27,10 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable} ${inter.variable}`}>
-        <Providers>
+        <Provider>
           <Header />
           {children}
-        </Providers>
+        </Provider>
       </body>
     </html>
   );
