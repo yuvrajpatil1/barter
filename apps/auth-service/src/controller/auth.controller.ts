@@ -103,6 +103,9 @@ export const loginUser = async (
       return next(new AuthError("Invalid email or password!"));
     }
 
+    res.clearCookie("seller-access-token");
+    res.clearCookie("seller-refresh-token");
+
     //Generate and set access token
     setCookie(
       res,
@@ -134,14 +137,17 @@ export const loginUser = async (
   }
 };
 
-//refresh token user
+//refresh token
 export const refreshToken = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const refreshToken = req.cookies.refresh_token;
+    const refreshToken =
+      req.cookies["refresh_token"] ||
+      req.cookies["seller-refresh-token"] ||
+      req.headers.authorization?.split(" ")[1];
 
     if (!refreshToken) {
       return new ValidationError("Unauthorized! No refresh token.");
@@ -156,11 +162,17 @@ export const refreshToken = async (
       return new JsonWebTokenError("Forbidden! Invalid refresh token.");
     }
 
-    // let account;
-    // if (decoded.role === "user")
-    const user = await prisma.users.findUnique({ where: { id: decoded.id } });
+    let account;
+    if (decoded.role === "user") {
+      account = await prisma.users.findUnique({ where: { id: decoded.id } });
+    } else if (decoded.role === "seller") {
+      account = await prisma.sellers.findUnique({
+        where: { id: decoded.id },
+        include: { shop: true },
+      });
+    }
 
-    if (!user) {
+    if (!account) {
       return new AuthError("Forbidden! User/Seller not found.");
     }
 
@@ -170,7 +182,13 @@ export const refreshToken = async (
       { expiresIn: "15m" }
     );
 
-    setCookie(res, "access_token", newAccessToken);
+    if (decoded.role === "user") {
+      setCookie(res, "access_token", newAccessToken);
+    } else if (decoded.role === "seller") {
+      setCookie(res, "seller-access-token", newAccessToken);
+    }
+
+    req.role = decoded.role;
 
     return res.status(201).json({ success: true });
   } catch (error) {
@@ -441,6 +459,9 @@ export const loginSeller = async (
     if (!isMatch) {
       return next(new AuthError("Invalid email or password!"));
     }
+
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
 
     //Generate access token
     const accessToken = jwt.sign(
