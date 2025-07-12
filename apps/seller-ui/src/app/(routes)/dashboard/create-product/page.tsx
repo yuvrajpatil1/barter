@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/app/utils/axiosInstance";
 import RichTextEditor from "../../../../../../../packages/components/rich-text-editor";
 import SizeSelector from "../../../../../../../packages/components/size-selector";
+import Link from "next/link";
 
 const Page = () => {
   const {
@@ -101,7 +102,9 @@ const Page = () => {
       {/* Heading and Breadcrumbs */}
       <h2 className="text-2xl py-2 font-semibold text-white">Create Product</h2>
       <div className="flex items-center">
-        <span className="text-[#80Deea] cursor-pointer">Dashboard</span>
+        <Link href={"/dashboard"} className="text-[#80Deea] cursor-pointer">
+          Dashboard
+        </Link>
         <ChevronRight size={20} className="opacity-[0.8]" />
         <span>Create Product</span>
       </div>

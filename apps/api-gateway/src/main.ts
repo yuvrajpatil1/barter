@@ -48,7 +48,7 @@ app.get("/gateway-health", (req, res) => {
 app.use("/product", proxy("http://localhost:6002"));
 app.use("/", proxy("http://localhost:6001"));
 
-const port = process.env.PORT || 8080; // Changed from 8080 to 3001
+const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
   try {

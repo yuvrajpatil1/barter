@@ -30,8 +30,6 @@ const setupSwagger = () => {
   try {
     // Look for swagger file in the build directory
     const swaggerPath = path.join(__dirname, "../../../swagger-output.json");
-    console.log(__dirname);
-    console.log("Looking for swagger file at:", swaggerPath);
 
     if (fs.existsSync(swaggerPath)) {
       const swaggerContent = fs.readFileSync(swaggerPath, "utf8");
