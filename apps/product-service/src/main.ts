@@ -1,9 +1,8 @@
-// File: apps/auth-service/src/main.ts
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "../../../packages/error-handler/error-middleware";
-import router from "./routes/auth.router";
+import router from "./routes/product.router";
 import swaggerUi from "swagger-ui-express";
 import path from "path";
 import fs from "fs";
@@ -22,7 +21,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.send({ message: "Hello API" });
+  res.send({ message: "Hello Product API" });
 });
 
 // Setup swagger with proper error handling
@@ -30,7 +29,6 @@ const setupSwagger = () => {
   try {
     // Look for swagger file in the build directory
     const swaggerPath = path.join(__dirname, "../../../swagger-output.json");
-    console.log(__dirname);
     console.log("Looking for swagger file at:", swaggerPath);
 
     if (fs.existsSync(swaggerPath)) {
@@ -79,9 +77,9 @@ app.use("/api", router);
 
 app.use(errorMiddleware);
 
-const port = process.env.PORT || 6001;
+const port = process.env.PORT || 6002;
 const server = app.listen(port, () => {
-  console.log(`🚀 Auth service is running on http://localhost:${port}/api`);
+  console.log(`🚀 Product service is running on http://localhost:${port}/api`);
   if (swaggerAvailable) {
     console.log(`📚 Swagger Docs available at http://localhost:${port}/docs`);
   } else {

@@ -3,7 +3,7 @@ import useSeller from "@/hooks/useSeller";
 import useSidebar from "@/hooks/useSidebar";
 import { usePathname } from "next/navigation";
 import React, { useEffect } from "react";
-import Box from "./box";
+import Box from "../box";
 import { Sidebar } from "./sidebar.styles";
 import Link from "next/link";
 import SidebarItem from "./sidebar.item";
@@ -43,9 +43,7 @@ function SidebarWrapper() {
       <Sidebar.Header>
         <Box>
           <Link href={"/"} className="flex justify-center text-center gap-2 ">
-            <h1 className="text-5xl font-bold">
-              B <span className="font-thin text-gray-400 text-5xl">|</span>{" "}
-            </h1>
+            <h1 className="text-5xl font-bold">B</h1>
             <Box>
               <h3 className="text-xl font-medium text-[#ecedee]">
                 {seller?.shop?.name}
