@@ -1,7 +1,7 @@
 "use client";
 
 import ImagePlaceholder from "@/shared/components/image-placeholder";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Wand, X } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import Input from "../../../../../../../packages/components/input/index";
@@ -13,6 +13,15 @@ import axiosInstance from "@/app/utils/axiosInstance";
 import RichTextEditor from "../../../../../../../packages/components/rich-text-editor";
 import SizeSelector from "../../../../../../../packages/components/size-selector";
 import Link from "next/link";
+import Image from "next/image";
+import { enhancements } from "@/app/utils/AI.enhancements";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+interface UploadedImage {
+  fileId: string;
+  file_url: string;
+}
 
 const Page = () => {
   const {
@@ -26,8 +35,14 @@ const Page = () => {
 
   const [openImageModal, setOpenImageModal] = useState(false);
   const [isChanged, setIsChanged] = useState(true);
-  const [images, setImages] = useState<(File | null)[]>([null]);
+  const [activeEffect, setActiveEffect] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [pictureUploadingLoader, setPictureUploadingLoader] = useState(false);
+  const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+
+  const router = useRouter();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["categories"],
@@ -37,6 +52,7 @@ const Page = () => {
         return res.data;
       } catch (error) {
         console.log(error);
+        throw error; // Fixed: proper error handling
       }
     },
     staleTime: 1000 * 60 * 5,
@@ -61,23 +77,31 @@ const Page = () => {
     return selectedCategory ? subCategoriesData[selectedCategory] || [] : [];
   }, [selectedCategory, subCategoriesData]);
 
-  console.log(categories, subcategories);
-
-  const onSubmit = (data: any) => {
-    console.log(data);
+  const onSubmit = async (data: any) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post("/product/api/create-product", data);
+      router.push("/dashboard/all-products");
+    } catch (error: any) {
+      toast.error(error?.data?.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const convertFileToBase64 = (file: File) => {
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    // Fixed: proper typing
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
+      reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
     });
   };
 
   const handleImageChange = async (file: File | null, index: number) => {
     if (!file) return;
+    setPictureUploadingLoader(true);
 
     try {
       const fileName = await convertFileToBase64(file);
@@ -85,8 +109,14 @@ const Page = () => {
         "/product/api/upload-product-image",
         { fileName }
       );
+
+      const uploadedImage: UploadedImage = {
+        fileId: response.data.fileId,
+        file_url: response.data.file_url,
+      };
+
       const updatedImages = [...images];
-      updatedImages[index] = response.data.file_name;
+      updatedImages[index] = uploadedImage;
 
       if (index === images.length - 1 && updatedImages.length < 8) {
         updatedImages.push(null);
@@ -96,22 +126,26 @@ const Page = () => {
       setValue("images", updatedImages);
     } catch (error) {
       console.log(error);
+    } finally {
+      console.log("first");
+      setPictureUploadingLoader(false);
     }
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = async (index: number) => {
     try {
       const updatedImages = [...images];
-
       const imageToDelete = updatedImages[index];
 
-      if (imageToDelete && typeof imageToDelete === "string") {
-        //delete our imamge
+      if (imageToDelete && typeof imageToDelete === "object") {
+        // Fixed: proper API call
+        await axiosInstance.delete("/product/api/delete-product-image", {
+          data: { fileId: imageToDelete.fileId },
+        });
       }
 
       updatedImages.splice(index, 1);
 
-      //add null placeholder
       if (!updatedImages.includes(null) && updatedImages.length < 8) {
         updatedImages.push(null);
       }
@@ -123,7 +157,26 @@ const Page = () => {
     }
   };
 
-  const handleSaveDraft = () => {};
+  const applyTransformation = async (transformation: string) => {
+    if (!selectedImage || processing) {
+      setProcessing(true);
+      setActiveEffect(transformation);
+    }
+
+    try {
+      const transformedUrl = `${selectedImage}?tr=${transformation}`;
+      console.log(transformedUrl);
+      setSelectedImage(transformedUrl);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    // Implementation for save draft
+  };
 
   return (
     <form
@@ -149,8 +202,11 @@ const Page = () => {
               setOpenImageModal={setOpenImageModal}
               size="765*850"
               small={false}
+              images={images}
               index={0}
               onImageChange={handleImageChange}
+              setSelectedImage={setSelectedImage}
+              pictureUploadingLoader={pictureUploadingLoader}
               onRemove={handleRemoveImage}
             />
           )}
@@ -161,8 +217,11 @@ const Page = () => {
                 size="765*850"
                 key={index}
                 small={true}
+                images={images}
                 index={index + 1}
                 onImageChange={handleImageChange}
+                setSelectedImage={setSelectedImage}
+                pictureUploadingLoader={pictureUploadingLoader}
                 onRemove={handleRemoveImage}
               />
             ))}
@@ -194,7 +253,7 @@ const Page = () => {
                   cols={10}
                   label="Short Description *(Max 150 words)"
                   placeholder="Enter product description for quick view"
-                  {...register("description", {
+                  {...register("short_description", {
                     required: "Description is required",
                     validate: (value) => {
                       const wordCount = value.trim().split(/\s+/).length;
@@ -217,7 +276,7 @@ const Page = () => {
                   label="Tags*"
                   placeholder="apple, flagship"
                   {...register("tags", {
-                    required: "Separate related product tags with coma",
+                    required: "Separate related product tags with comma", // Fixed: typo 'coma' to 'comma'
                   })}
                 />
                 {errors.tags && (
@@ -251,7 +310,7 @@ const Page = () => {
                     pattern: {
                       value: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
                       message:
-                        "Invalid slug format! Use only lowercse letters, numbers, and",
+                        "Invalid slug format! Use only lowercase letters, numbers, and hyphens", // Fixed: typo and completed message
                     },
                     minLength: {
                       value: 3,
@@ -274,7 +333,7 @@ const Page = () => {
                 <Input
                   label="Brand*"
                   placeholder="Apple"
-                  {...register("brand")}
+                  {...register("brand", { required: "Brand is required" })} // Fixed: added validation
                 />
                 {errors.brand && (
                   <p className="text-red-500 text-xs mt-1">
@@ -397,9 +456,9 @@ const Page = () => {
                     )}
                   />
                 )}
-                {errors.subcategory && (
+                {errors.subCategory && ( // Fixed: field name consistency
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.subcategory.message as string}
+                    {errors.subCategory.message as string}
                   </p>
                 )}
               </div>
@@ -463,9 +522,9 @@ const Page = () => {
                   label="Regular Price"
                   placeholder="Rs. 499/-"
                   {...register("regular_price", {
-                    required: "Sale Price is required!",
+                    required: "Regular Price is required!", // Fixed: label consistency
                     valueAsNumber: true,
-                    min: { value: 1, message: "Price must be atleast 1!" },
+                    min: { value: 1, message: "Price must be at least 1!" }, // Fixed: typo 'atleast' to 'at least'
                     validate: (value) =>
                       !isNaN(value) || "Only numbers are allowed!",
                   })}
@@ -484,7 +543,7 @@ const Page = () => {
                   {...register("sale_price", {
                     required: "Sale Price is required!",
                     valueAsNumber: true,
-                    min: { value: 1, message: "Price must be atleast 1!" },
+                    min: { value: 1, message: "Price must be at least 1!" }, // Fixed: typo 'atleast' to 'at least'
                     validate: (value) => {
                       if (isNaN(value)) return "Only numbers are allowed!";
                       if (regularPrice && value >= regularPrice) {
@@ -508,7 +567,7 @@ const Page = () => {
                   {...register("stock", {
                     required: "Stock is required!",
                     valueAsNumber: true,
-                    min: { value: 1, message: "Stock must be atleast 1!" },
+                    min: { value: 1, message: "Stock must be at least 1!" }, // Fixed: typo 'atleast' to 'at least'
                     max: {
                       value: 1000,
                       message: "Stock cannot exceed 1000!",
@@ -544,20 +603,21 @@ const Page = () => {
                       <button
                         key={code.id}
                         type="button"
-                        className={`px-3 rounded-md text-sm font-semibold border ${
+                        className={`px-3 py-1 rounded-md text-sm font-semibold border ${
+                          // Fixed: added py-1 for better padding
                           watch("discountCodes")?.includes(code.id)
                             ? "bg-blue-600 text-white border-blue-600"
-                            : " bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-700"
+                            : "bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-700"
                         }`}
                         onClick={() => {
-                          const currenSelection = watch("discountCodes") || [];
-                          const updatedSelection = currenSelection?.includes(
+                          const currentSelection = watch("discountCodes") || []; // Fixed: typo 'currenSelection' to 'currentSelection'
+                          const updatedSelection = currentSelection?.includes(
                             code.id
                           )
-                            ? currenSelection.filter(
+                            ? currentSelection.filter(
                                 (id: string) => id !== code.id
                               )
-                            : [...currenSelection, code.id];
+                            : [...currentSelection, code.id];
 
                           setValue("discountCodes", updatedSelection);
                         }}
@@ -573,19 +633,69 @@ const Page = () => {
           </div>
         </div>
       </div>
+
+      {openImageModal && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-[450px] text-white">
+            <div className="flex justify-between items-center pb-3 mb-4">
+              <h2 className="text-lg font-semibold">Enhance Product Image</h2>
+              <X
+                size={20}
+                className="cursor-pointer"
+                onClick={() => setOpenImageModal(false)} // Fixed: simplified toggle
+              />
+            </div>
+            <div className="w-full h-[250px] rounded-md overflow-hidden border border-gray-600 relative">
+              {" "}
+              {/* Fixed: added relative for proper Image layout */}
+              <Image
+                src={selectedImage}
+                alt="productImage"
+                fill // Fixed: replaced deprecated layout="fill" with fill
+                className="object-cover" // Fixed: added proper object-cover class
+              />
+            </div>
+            {selectedImage && (
+              <div className="mt-4 space-y-2">
+                <h3 className="text-white text-sm font-semibold">
+                  AI Enhancements
+                </h3>
+                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto">
+                  {enhancements?.map(({ label, effect }) => (
+                    <button
+                      key={effect}
+                      className={`p-2 rounded-md flex items-center gap-2 ${
+                        activeEffect === effect
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      }`}
+                      onClick={() => applyTransformation(effect)}
+                      disabled={processing}
+                    >
+                      <Wand size={18} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-3">
         {isChanged && (
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="px-4 py-2 bg-gray-700 text-white rounded-md"
+            className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors" // Fixed: added hover state
           >
             Save Draft
           </button>
         )}
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors" // Fixed: added hover state
           disabled={loading}
         >
           {loading ? "Creating..." : "Create"}

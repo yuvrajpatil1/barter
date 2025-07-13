@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import "./jobs/product-cron-job";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "../../../packages/error-handler/error-middleware";
 import router from "./routes/product.router";
@@ -75,6 +76,8 @@ if (!swaggerAvailable) {
 app.use("/api", router);
 
 app.use(errorMiddleware);
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 const port = process.env.PORT || 6002;
 const server = app.listen(port, () => {
