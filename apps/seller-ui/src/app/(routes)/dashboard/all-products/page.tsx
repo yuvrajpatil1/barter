@@ -34,7 +34,7 @@ const deleteProduct = async (productId: string) => {
   await axiosInstance.delete(`product/api/delete-product/${productId}`);
 };
 const restoreProduct = async (productId: string) => {
-  await axiosInstance.put(`product/api/delete-product/${productId}`);
+  await axiosInstance.put(`product/api/restore-product/${productId}`);
 };
 
 const ProductList = () => {
