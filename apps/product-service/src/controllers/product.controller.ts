@@ -4,6 +4,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../../../packages/error-handler";
+import imagekit from "../../../../packages/libs/imagekit";
 
 //get product categories
 export const getCategories = async (
@@ -155,6 +156,29 @@ export const deleteDiscountCode = async (
     return res.status(200).json({
       success: true,
       message: "Discount code deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//upload product image
+export const uploadProductImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { fileName } = req.body;
+    const response = await imagekit.upload({
+      file: fileName,
+      fileName: `product-${Date.now()}.jpg`,
+      folder: "/products",
+    });
+
+    res.status(201).json({
+      file_url: response.url,
+      fileName: response.fileId,
     });
   } catch (error) {
     next(error);
