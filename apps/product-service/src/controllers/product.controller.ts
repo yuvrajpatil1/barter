@@ -7,6 +7,7 @@ import {
 } from "../../../../packages/error-handler";
 import imagekit from "../../../../packages/libs/imagekit";
 import { request } from "http";
+import { Prisma } from "@prisma/client";
 
 //get product categories
 export const getCategories = async (
@@ -436,5 +437,118 @@ export const restoreProduct = async (
       message: "Error restoring product.",
       error,
     });
+  }
+};
+
+//get stripe seller information
+
+//get all products
+export const getAllProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+    const type = req.query.type;
+
+    // Debug: First, let's see what products exist without any filters
+    const totalProductsInDB = await prisma.products.count();
+    console.log("Total products in database:", totalProductsInDB);
+
+    // Sample a few products to check their structure
+    const sampleProducts = await prisma.products.findMany({
+      take: 2,
+      select: {
+        id: true,
+        title: true,
+        starting_date: true,
+        ending_date: true,
+        status: true,
+        isDeleted: true,
+      },
+    });
+    console.log("Sample products:", sampleProducts);
+
+    // Updated filter logic - more flexible
+    const baseFilter = {
+      // Only include non-deleted products
+      isDeleted: { not: true },
+
+      // Include active products
+      status: "Active",
+
+      // For time-based filtering, include products that are:
+      // 1. Have no start/end dates (always available)
+      // 2. Started but not ended
+      // 3. Within the active date range
+      AND: [
+        {
+          OR: [{ starting_date: null }, { starting_date: { lte: new Date() } }],
+        },
+        {
+          OR: [{ ending_date: null }, { ending_date: { gte: new Date() } }],
+        },
+      ],
+    };
+
+    // If you just want to get ALL products for testing, use this simple filter:
+    const simpleFilter = {
+      isDeleted: { not: true },
+    };
+
+    // Use simpleFilter for testing, then switch to baseFilter
+    const filterToUse = simpleFilter; // Change this to baseFilter when ready
+
+    const orderBy: Prisma.productsOrderByWithRelationInput =
+      type === "latest"
+        ? { createdAt: "desc" as Prisma.SortOrder }
+        : { totalSales: "desc" as Prisma.SortOrder };
+
+    const [products, total, top10Products] = await Promise.all([
+      prisma.products.findMany({
+        skip,
+        take: limit,
+        include: {
+          images: true,
+          Shop: true,
+        },
+        where: filterToUse,
+        orderBy: {
+          totalSales: "desc",
+        },
+      }),
+
+      prisma.products.count({ where: filterToUse }),
+
+      prisma.products.findMany({
+        take: 10,
+        where: filterToUse,
+        orderBy,
+        include: {
+          images: true,
+          Shop: true,
+        },
+      }),
+    ]);
+
+    console.log("Filtered products count:", total);
+    console.log("Products found:", products.length);
+
+    res.status(200).json({
+      products,
+      top10By: type === "latest" ? "latest" : "topSales",
+      top10Products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    });
+    return;
+  } catch (error) {
+    console.error("Error in getAllProducts:", error);
+    next(error);
+    return;
   }
 };

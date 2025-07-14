@@ -9,7 +9,8 @@ import path from "path";
 import fs from "fs";
 
 const app = express();
-
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(
   cors({
     origin: ["http://localhost:3000"],
@@ -76,8 +77,6 @@ if (!swaggerAvailable) {
 app.use("/api", router);
 
 app.use(errorMiddleware);
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 const port = process.env.PORT || 6001;
 const server = app.listen(port, () => {

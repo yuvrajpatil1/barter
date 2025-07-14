@@ -13,6 +13,9 @@ import initializeSiteConfig from "./libs/initializeSiteConfig";
 
 const app = express();
 
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
+
 app.use(
   cors({
     origin: ["http://localhost:3000"],
@@ -22,8 +25,6 @@ app.use(
 );
 
 app.use(morgan("dev"));
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(cookieParser());
 app.set("trust proxy", 1);
 

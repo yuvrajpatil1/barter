@@ -197,15 +197,33 @@ export const refreshToken = async (
 };
 
 //get logged in user info
-export const getUser = async (req: any, res: Response, next: NextFunction) => {
+export const getUser = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const user = req.user;
-    res.status(201).json({
+
+    // Check if user exists (middleware should set this)
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "No user found. Please login.",
+        user: null,
+      });
+      return; // Explicit return
+    }
+
+    // Use 200 for successful GET requests (not 201)
+    res.status(200).json({
       success: true,
       user,
     });
+    return; // Explicit return
   } catch (error) {
     next(error);
+    return; // Explicit return
   }
 };
 

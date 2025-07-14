@@ -11,8 +11,8 @@ model images {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   file_id    String
   url        String
-  userId     String?   @unique @db.ObjectId
-  shopId     String?   @unique @db.ObjectId
+  userId     String?   @db.ObjectId // Removed @unique
+  shopId     String?   @db.ObjectId // Removed @unique
   users      users?    @relation(fields: [userId], references: [id])
   shops      shops?    @relation(fields: [shopId], references: [id])
   products   products? @relation(fields: [productsId], references: [id])
@@ -25,7 +25,7 @@ model users {
   email       String        @unique
   password    String?
   following   String[]
-  avatar      images?
+  avatar      images[] // Changed from images? to images[] to allow multiple
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   shopReviews shopReviews[]
@@ -48,7 +48,7 @@ model shops {
   name          String
   bio           String?
   category      String
-  avatar        images?
+  avatar        images[] // Changed from images? to images[] to allow multiple
   coverBanner   String?
   address       String
   opening_hours String?
@@ -119,6 +119,7 @@ model products {
   sale_price            Float
   regular_price         Float
   ratings               Float         @default(0)
+  ratingCount           Int?          @default(0)
   warranty              String?
   custom_specifications Json?
   custom_properties     Json
@@ -131,4 +132,5 @@ model products {
   updatedAt             DateTime      @updatedAt
   shopId                String        @db.ObjectId
   Shop                  shops         @relation(fields: [shopId], references: [id])
+  totalSales            Int           @default(0)
 }

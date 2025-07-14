@@ -1,8 +1,7 @@
 //@ts-check
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { composePlugins, withNx } = require('@nx/next');
-
+const { composePlugins, withNx } = require("@nx/next");
 
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
@@ -13,6 +12,22 @@ const nextConfig = {
     // See: https://github.com/gregberge/svgr
     svgr: false,
   },
+  images: {
+    domains: ["ik.imagekit.io"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ik.imagekit.io",
+        pathname: "/**",
+      },
+    ],
+    minimumCacheTTL: 120,
+    unoptimized: true,
+  },
+  // Add timeout for API routes if needed
+  experimental: {
+    proxyTimeout: 120000, // 2 minutes
+  },
 };
 
 const plugins = [
@@ -21,4 +36,3 @@ const plugins = [
 ];
 
 module.exports = composePlugins(...plugins)(nextConfig);
-
