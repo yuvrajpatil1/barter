@@ -3,6 +3,10 @@ import React, { useEffect, useState } from "react";
 import Ratings from "../ratings/ratings";
 import { Eye, Heart, ShoppingCart } from "lucide-react";
 import ProductDetailsCard from "./product-details-card";
+import { useStore } from "@/store";
+import useUser from "@/hooks/useUser";
+import useLocationTracking from "@/hooks/useLocationTracking";
+import useDeviceTracking from "@/hooks/useDeviceTracking";
 
 const ProductCard = ({
   product,
@@ -13,6 +17,17 @@ const ProductCard = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState("");
   const [open, setOpen] = useState(false);
+  const { user } = useUser();
+  const location = useLocationTracking();
+  const deviceInfo = useDeviceTracking();
+  const addToCart = useStore((state: any) => state.addToCart);
+  const removeFromCart = useStore((state: any) => state.removeFromCart);
+  const addToWishlist = useStore((state: any) => state.addToWishlist);
+  const removeFromWishlist = useStore((state: any) => state.removeFromWishlist);
+  const wishlist = useStore((state: any) => state.wishlist);
+  const isWishlisted = wishlist.some((item: any) => item.id === product.id);
+  const cart = useStore((state: any) => state.cart);
+  const isInCart = cart.some((item: any) => item.id === product.id);
 
   useEffect(() => {
     if (isEvent && product?.ending_date) {
@@ -135,8 +150,18 @@ const ProductCard = ({
           <Heart
             className="cursor-pointer hover:scale-105 transition-transform"
             size={20}
-            fill={"red"}
-            stroke="red"
+            fill={isWishlisted ? "red" : "trasparent"}
+            onClick={() =>
+              isWishlisted
+                ? removeFromWishlist(product.id, user, location, deviceInfo)
+                : addToWishlist(
+                    { ...product, quantity: 1 },
+                    user,
+                    location,
+                    deviceInfo
+                  )
+            }
+            stroke={isWishlisted ? "red" : "#4B5563"}
           />
         </div>
         <div className="bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-shadow">
@@ -150,6 +175,10 @@ const ProductCard = ({
           <ShoppingCart
             className="cursor-pointer text-gray-600 hover:scale-105 transition-transform"
             size={20}
+            onClick={() =>
+              !isInCart &&
+              addToCart({ ...product, quantity: 1 }, user, location, deviceInfo)
+            }
           />
         </div>
       </div>

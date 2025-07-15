@@ -4,9 +4,12 @@ import React from "react";
 import { Heart, Search, ShoppingCart, User } from "lucide-react";
 import HeaderBottom from "./header-bottom";
 import useUser from "@/hooks/useUser";
+import { useStore } from "@/store";
 
 function Header() {
   const { user, isLoading } = useUser();
+  const wishlist = useStore((state: any) => state.wishlist);
+  const cart = useStore((state: any) => state.cart);
 
   return (
     <div className="w-full bg-white">
@@ -64,13 +67,17 @@ function Header() {
             <Link href={"/wishlist"} className="relative">
               <Heart />
               <div className="w-5 h-5 border-2 border-white bg-red-500 rounded-full flex items-center justify-center absolute top-[-10px] right-[-10px]">
-                <span className="text-white font-medium text-sm">0</span>
+                <span className="text-white font-medium text-sm">
+                  {wishlist.length}
+                </span>
               </div>
             </Link>
             <Link href={"/cart"} className="relative">
               <ShoppingCart />
               <div className="w-5 h-5 border-2 border-white bg-red-500 rounded-full flex items-center justify-center absolute top-[-10px] right-[-10px]">
-                <span className="text-white font-medium text-sm">0</span>
+                <span className="text-white font-medium text-sm">
+                  {cart.length}
+                </span>
               </div>
             </Link>
           </div>
