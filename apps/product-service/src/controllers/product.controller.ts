@@ -553,6 +553,61 @@ export const getAllProducts = async (
   }
 };
 
+//get all Events
+export const getAllEvents = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
+    // Updated filter logic - more flexible
+    const baseFilter = {
+      AND: [{ starting_date: { not: null } }, { ending_date: { not: null } }],
+    };
+
+    const [events, total, top10BySales] = await Promise.all([
+      prisma.products.findMany({
+        skip,
+        take: limit,
+        include: {
+          images: true,
+          Shop: true,
+        },
+        orderBy: {
+          totalSales: "desc",
+        },
+      }),
+
+      prisma.products.count({ where: baseFilter }),
+
+      prisma.products.findMany({
+        where: baseFilter,
+        take: 10,
+        orderBy: {
+          totalSales: "desc",
+        },
+      }),
+    ]);
+
+    res.status(200).json({
+      events,
+      top10BySales,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    });
+    return;
+  } catch (error) {
+    console.error("Error in getAllEvents:", error);
+    next(error);
+    return;
+  }
+};
+
 //get product details
 export const getProductDetails = async (
   req: Request,
