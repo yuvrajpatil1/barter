@@ -1,48 +1,63 @@
 "use client";
 
-import { timeStamp } from "console";
 import { useEffect, useState } from "react";
 
 const LOCATION_STORAGE_KEY = "user_location";
 const LOCATION_EXPIRY_DAYS = 20;
 
-const getStoredLocation = () => {
-  const storedData = localStorage.getItem(LOCATION_STORAGE_KEY);
+type LocationData = {
+  country: string;
+  city: string;
+};
 
-  if (!storedData) return null;
+const getStoredLocation = (): LocationData | null => {
+  try {
+    const storedData = localStorage.getItem(LOCATION_STORAGE_KEY);
+    if (!storedData) return null;
 
-  const parsedData = JSON.parse(storedData);
-  const expiryTime = LOCATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000; //20DAYS
-  const isExpired = Date.now() - parsedData.timestamp > expiryTime;
+    const parsed = JSON.parse(storedData);
+    const expiryTime = LOCATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 
-  return isExpired ? null : parsedData;
+    const isExpired = Date.now() - parsed.timestamp > expiryTime;
+
+    return isExpired ? null : parsed.location;
+  } catch (err) {
+    console.error("Failed to parse location:", err);
+    return null;
+  }
 };
 
 const useLocationTracking = () => {
-  const [location, setLocation] = useState<{
-    country: string;
-    city: string;
-  } | null>(getStoredLocation());
+  const [location, setLocation] = useState<LocationData | null>(
+    getStoredLocation()
+  );
 
   useEffect(() => {
     if (location) return;
 
-    fetch("http://ip.api.com/json/")
+    fetch("https://ip-api.com/json/")
       .then((res) => res.json())
       .then((data) => {
-        const newLocation = {
-          country: data?.country,
-          city: data?.city,
-          timestamp: Date.now(),
+        const newLocation: LocationData = {
+          country: data.country,
+          city: data.city,
         };
 
-        localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(newLocation));
+        localStorage.setItem(
+          LOCATION_STORAGE_KEY,
+          JSON.stringify({
+            location: newLocation,
+            timestamp: Date.now(),
+          })
+        );
+
         setLocation(newLocation);
       })
       .catch((error) => {
-        console.log("failed to get location", error);
+        console.error("Failed to get location:", error);
       });
   }, []);
+
   return location;
 };
 

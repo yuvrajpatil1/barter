@@ -3,10 +3,9 @@ import React, { FC } from "react";
 
 type Props = {
   rating: number;
-  ratingCount: number;
 };
 
-const Ratings: FC<Props> = ({ rating, ratingCount }) => {
+const Ratings: FC<Props> = ({ rating }) => {
   const stars = [];
 
   const fullStars = Math.floor(rating);
@@ -38,7 +37,6 @@ const Ratings: FC<Props> = ({ rating, ratingCount }) => {
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-1">{stars}</div>
-      <span className="text-sm text-gray-500">({ratingCount})</span>
     </div>
   );
 };

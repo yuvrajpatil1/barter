@@ -91,7 +91,7 @@ const ProductDetailsCard = ({
               <div className="flex items-start gap-3">
                 {/* Shop Logo */}
                 <Image
-                  src={data?.Shpo?.avatar}
+                  src={data?.shops?.avatar}
                   alt="Shop Logo"
                   width={60}
                   height={60}

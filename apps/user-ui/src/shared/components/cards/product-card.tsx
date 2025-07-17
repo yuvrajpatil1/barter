@@ -110,10 +110,7 @@ const ProductCard = ({
 
         {/* Ratings - Fixed Height */}
         <div className="h-6 mb-3">
-          <Ratings
-            rating={product?.ratings || 0}
-            ratingCount={product?.ratingCount || 0}
-          />
+          <Ratings rating={product?.ratings || 0} />
         </div>
 
         {/* Price and Sales Container - Fixed Height */}
