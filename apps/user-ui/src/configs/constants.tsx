@@ -20,3 +20,10 @@ export const navItems: NavItemsTypes[] = [
     href: "/become-seller",
   },
 ];
+
+export const categories = [
+  "Electronics",
+  "Fashion",
+  "Home & Kitchen",
+  "Sports & Fitness",
+];

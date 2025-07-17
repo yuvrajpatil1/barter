@@ -39,7 +39,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
   const [quantity, setQuantity] = useState(1);
   const [priceRange, setPriceRange] = useState([
     productDetails?.sale_price,
-    1199,
+    999999,
   ]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
 
@@ -85,7 +85,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
       query.set("limit", "5");
 
       const res = await axiosInstance.get(
-        `/product/api/get-filtered/products?${query.toString()}`
+        `/product/api/get-filtered-products?${query.toString()}`
       );
       setRecommendedProducts(res.data.products);
     } catch (error) {
@@ -102,7 +102,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
       <div className="w-[90%] bg-white lg:w-[80%] mx-auto pt-6 grid grid-cols-1 lg:grid-cols-[28%_44%_28%] gap-6 overflow-hidden">
         {/* Left Column - product images*/}
         <div className="p-4">
-          <div className="relative w-full">
+          <div className="relative w-full z-50">
             {/* Main img with zoom */}
             <ReactImageMagnify
               {...{

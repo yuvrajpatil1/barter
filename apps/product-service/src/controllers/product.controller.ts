@@ -589,57 +589,84 @@ export const getProductDetails = async (
 };
 
 //get filtered products
+
 export const getFilteredProducts = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    console.log("=== DEBUGGING FILTERED PRODUCTS ===");
+    console.log("Raw query params:", req.query);
+
     const {
-      priceRange = [0, 10000],
-      categories = [],
-      colors = [],
-      sizes = [],
-      page = 1,
-      limit = 12,
+      priceRange = "0,10000",
+      categories,
+      colors,
+      sizes,
+      page = "1",
+      limit = "12",
     } = req.query;
 
     const parsedPriceRange =
       typeof priceRange === "string"
         ? priceRange.split(",").map(Number)
         : [0, 10000];
-    const parsedPage = Number(page);
-    const parsedLimit = Number(limit);
 
+    const parsedPage = parseInt(page as string) || 1;
+    const parsedLimit = parseInt(limit as string) || 12;
     const skip = (parsedPage - 1) * parsedLimit;
 
+    // Base filters - removed starting_date filter
     const filters: Record<string, any> = {
       sale_price: {
         gte: parsedPriceRange[0],
         lte: parsedPriceRange[1],
       },
-      starting_date: null,
+      isDeleted: { not: true }, // Add this filter
     };
 
-    if (categories && (categories as string[]).length > 0) {
-      filters.category = {
-        in: Array.isArray(categories)
-          ? categories
-          : String(categories).split(","),
-      };
+    // Add optional filters
+    if (categories) {
+      const parsedCategories = Array.isArray(categories)
+        ? categories
+        : String(categories).split(",").filter(Boolean);
+
+      if (parsedCategories.length > 0) {
+        filters.category = { in: parsedCategories };
+      }
     }
 
-    if (colors && (colors as string[]).length > 0) {
-      filters.colors = {
-        hasSome: Array.isArray(colors) ? colors : [colors],
-      };
+    if (colors) {
+      const parsedColors = Array.isArray(colors)
+        ? colors
+        : String(colors).split(",").filter(Boolean);
+
+      if (parsedColors.length > 0) {
+        filters.colors = { hasSome: parsedColors };
+      }
     }
 
-    if (sizes && (sizes as string[]).length > 0) {
-      filters.sizes = {
-        hasSome: Array.isArray(sizes) ? sizes : [sizes],
-      };
+    if (sizes) {
+      const parsedSizes = Array.isArray(sizes)
+        ? sizes
+        : String(sizes).split(",").filter(Boolean);
+
+      if (parsedSizes.length > 0) {
+        filters.sizes = { hasSome: parsedSizes };
+      }
     }
+
+    console.log("Final filters:", JSON.stringify(filters, null, 2));
+
+    // First, test without any filters to see if products exist
+    const testQuery = await prisma.products.findMany({
+      where: { isDeleted: { not: true } },
+      take: 5,
+      select: { id: true, title: true, sale_price: true, starting_date: true },
+    });
+
+    console.log("Test query results:", testQuery);
 
     const [products, total] = await Promise.all([
       prisma.products.findMany({
@@ -651,6 +678,10 @@ export const getFilteredProducts = async (
       prisma.products.count({ where: filters }),
     ]);
 
+    console.log("Filtered products count:", products.length);
+    console.log("Total count:", total);
+    console.log("=== END DEBUGGING ===");
+
     const totalPages = Math.ceil(total / parsedLimit);
 
     res.json({
@@ -658,6 +689,7 @@ export const getFilteredProducts = async (
       pagination: { total, page: parsedPage, totalPages },
     });
   } catch (error) {
+    console.error("Error in getFilteredProducts:", error);
     next(error);
   }
 };
@@ -670,52 +702,72 @@ export const getFilteredEvents = async (
 ) => {
   try {
     const {
-      priceRange = [0, 10000],
-      categories = [],
-      colors = [],
-      sizes = [],
-      page = 1,
-      limit = 12,
+      priceRange = "0, 10000",
+      categories,
+      colors,
+      sizes,
+      page = "1",
+      limit = "12",
     } = req.query;
 
     const parsedPriceRange =
       typeof priceRange === "string"
         ? priceRange.split(",").map(Number)
         : [0, 10000];
-    const parsedPage = Number(page);
-    const parsedLimit = Number(limit);
-
+    const parsedPage = parseInt(page as string) || 1;
+    const parsedLimit = parseInt(limit as string) || 12;
     const skip = (parsedPage - 1) * parsedLimit;
 
+    // Base filters - removed starting_date filter
     const filters: Record<string, any> = {
       sale_price: {
         gte: parsedPriceRange[0],
         lte: parsedPriceRange[1],
       },
-      NOT: {
-        starting_date: null,
-      },
+      isDeleted: { not: true }, // Add this filter
     };
 
-    if (categories && (categories as string[]).length > 0) {
-      filters.category = {
-        in: Array.isArray(categories)
-          ? categories
-          : String(categories).split(","),
-      };
+    // Add optional filters
+    if (categories) {
+      const parsedCategories = Array.isArray(categories)
+        ? categories
+        : String(categories).split(",").filter(Boolean);
+
+      if (parsedCategories.length > 0) {
+        filters.category = { in: parsedCategories };
+      }
     }
 
-    if (colors && (colors as string[]).length > 0) {
-      filters.colors = {
-        hasSome: Array.isArray(colors) ? colors : [colors],
-      };
+    if (colors) {
+      const parsedColors = Array.isArray(colors)
+        ? colors
+        : String(colors).split(",").filter(Boolean);
+
+      if (parsedColors.length > 0) {
+        filters.colors = { hasSome: parsedColors };
+      }
     }
 
-    if (sizes && (sizes as string[]).length > 0) {
-      filters.sizes = {
-        hasSome: Array.isArray(sizes) ? sizes : [sizes],
-      };
+    if (sizes) {
+      const parsedSizes = Array.isArray(sizes)
+        ? sizes
+        : String(sizes).split(",").filter(Boolean);
+
+      if (parsedSizes.length > 0) {
+        filters.sizes = { hasSome: parsedSizes };
+      }
     }
+
+    console.log("Final filters:", JSON.stringify(filters, null, 2));
+
+    // First, test without any filters to see if products exist
+    const testQuery = await prisma.products.findMany({
+      where: { isDeleted: { not: true } },
+      take: 5,
+      select: { id: true, title: true, sale_price: true, starting_date: true },
+    });
+
+    console.log("Test query results:", testQuery);
 
     const [products, total] = await Promise.all([
       prisma.products.findMany({
@@ -727,6 +779,10 @@ export const getFilteredEvents = async (
       prisma.products.count({ where: filters }),
     ]);
 
+    console.log("Filtered products count:", products.length);
+    console.log("Total count:", total);
+    console.log("=== END DEBUGGING ===");
+
     const totalPages = Math.ceil(total / parsedLimit);
 
     res.json({
@@ -734,6 +790,7 @@ export const getFilteredEvents = async (
       pagination: { total, page: parsedPage, totalPages },
     });
   } catch (error) {
+    console.error("Error in getFilteredProducts:", error);
     next(error);
   }
 };
@@ -870,7 +927,7 @@ export const topShops = async (
         coverBanner: true,
         address: true,
         ratings: true,
-        followers: true,
+        // followers: true,
         category: true,
       },
     });
