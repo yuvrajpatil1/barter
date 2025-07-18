@@ -456,7 +456,6 @@ export const getAllProducts = async (
 
     // Debug: First, let's see what products exist without any filters
     const totalProductsInDB = await prisma.products.count();
-    console.log("Total products in database:", totalProductsInDB);
 
     // Sample a few products to check their structure
     const sampleProducts = await prisma.products.findMany({
@@ -470,7 +469,6 @@ export const getAllProducts = async (
         isDeleted: true,
       },
     });
-    console.log("Sample products:", sampleProducts);
 
     // Updated filter logic - more flexible
     const baseFilter = {
@@ -533,9 +531,6 @@ export const getAllProducts = async (
         },
       }),
     ]);
-
-    console.log("Filtered products count:", total);
-    console.log("Products found:", products.length);
 
     res.status(200).json({
       products,
@@ -951,24 +946,65 @@ export const searchProducts = async (
   }
 };
 
-//search products
+//top shops
 export const topShops = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    //aggregate total sales per shop from opders
+    // First, check if there are any orders at all
+    const totalOrders = await prisma.orders.count();
+    console.log("Total orders in database:", totalOrders);
+
+    // If no orders exist, return all shops
+    if (totalOrders === 0) {
+      console.log("No orders found, returning all shops");
+
+      const allShops = await prisma.shops.findMany({
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          coverBanner: true,
+          address: true,
+          ratings: true,
+          category: true,
+        },
+        orderBy: {
+          createdAt: "desc", // Show newest shops first when no sales data
+        },
+        take: 10, // Limit to 10 shops
+      });
+
+      // Add totalSales: 0 for consistency with the sales-based response
+      const shopsWithZeroSales = allShops.map((shop) => ({
+        ...shop,
+        totalSales: 0,
+      }));
+
+      console.log("Returning shops without sales data:", shopsWithZeroSales);
+
+      return res.status(200).json({
+        shops: shopsWithZeroSales,
+        message: "No orders found, showing all shops",
+      });
+    }
+
+    // If orders exist, proceed with the original logic
     const topShopsData = await prisma.orders.groupBy({
       by: ["shopId"],
       _sum: { total: true },
       orderBy: { _sum: { total: "desc" } },
       take: 10,
     });
+    console.log("topShopsData:", topShopsData);
 
-    //fetch the corresponding shop details
+    // Extract shop IDs
     const shopIds = topShopsData.map((item) => item.shopId);
+    console.log("shopIds:", shopIds);
 
+    // Fetch shop details
     const shops = await prisma.shops.findMany({
       where: {
         id: {
@@ -982,12 +1018,12 @@ export const topShops = async (
         coverBanner: true,
         address: true,
         ratings: true,
-        // followers: true,
         category: true,
       },
     });
+    console.log("Found shops:", shops);
 
-    //merge sales with shop data
+    // Merge sales with shop data
     const enrichedShops = shops.map((shop) => {
       const salesData = topShopsData.find((s) => s.shopId === shop.id);
       return {
@@ -995,12 +1031,19 @@ export const topShops = async (
         totalSales: salesData?._sum.total ?? 0,
       };
     });
+    console.log("enrichedShops:", enrichedShops);
 
+    // Sort by sales (though already ordered from groupBy)
     const top10Shops = enrichedShops
       .sort((a, b) => b.totalSales - a.totalSales)
       .slice(0, 10);
 
-    return res.status(200).json({ shops: top10Shops });
+    console.log("top10Shops:", top10Shops);
+
+    return res.status(200).json({
+      shops: top10Shops,
+      message: "Shops ordered by sales",
+    });
   } catch (error) {
     console.log("Error fetching top shops:", error);
     return next(error);

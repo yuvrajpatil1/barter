@@ -38,6 +38,7 @@ function Page() {
     queryKey: ["shops"],
     queryFn: async () => {
       const res = await axiosInstance.get("/product/api/top-shops");
+      console.log(res.data.shops);
       return res.data.shops;
     },
     staleTime: 1000 * 60 * 2,
