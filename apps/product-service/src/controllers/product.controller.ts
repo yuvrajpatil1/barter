@@ -881,7 +881,7 @@ export const getFilteredShops = async (
         take: parsedLimit,
         include: {
           sellers: true,
-          // followers: true,
+          followers: true,
           products: true,
         },
       }),
