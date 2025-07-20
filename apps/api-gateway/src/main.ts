@@ -1,8 +1,3 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import express from "express";
 import cors from "cors";
 import proxy from "express-http-proxy";
@@ -18,7 +13,11 @@ app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+    ],
     allowedHeaders: ["Authorization", "Content-Type"],
     credentials: true,
   })
@@ -48,6 +47,7 @@ app.use("/", proxy("http://localhost:6001"));
 app.use("/product", proxy("http://localhost:6002"));
 app.use("/seller", proxy("http://localhost:6003"));
 app.use("/order", proxy("http://localhost:6004"));
+app.use("/admin", proxy("http://localhost:6005"));
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {

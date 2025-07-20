@@ -790,3 +790,103 @@ export const deleteUserAddress = async (
     return next(error);
   }
 };
+
+//login admin
+export const loginAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(new ValidationError("Email and password are required!"));
+    }
+
+    const user = await prisma.users.findUnique({ where: { email } });
+
+    if (!user) return next(new AuthError("User doesn't exist!"));
+
+    //verify password
+    const isMatch = await bcrypt.compare(password, user.password!);
+    if (!isMatch) {
+      return next(new AuthError("Invalid email or password!"));
+    }
+
+    const isAdmin = user.role === "isAdmin";
+
+    if (!isAdmin) {
+      sendLog({
+        type: "error",
+        message: `Admin login failed for ${email} - not an admin`,
+        source: "auth-service",
+      });
+      return next(new AuthError("Invalid access!"));
+    }
+
+    sendLog({
+      type: "success",
+      message: `Admin login successful for ${email}.`,
+      source: "auth-service",
+    });
+
+    res.clearCookie("seller-access-token");
+    res.clearCookie("seller-refresh-token");
+
+    //Generate and set access token
+    setCookie(
+      res,
+      "access_token",
+      jwt.sign(
+        { id: user.id, role: "admin" },
+        process.env.ACCESS_TOKEN_SECRET as string,
+        { expiresIn: "15m" }
+      )
+    );
+
+    //Generate and set refresh token
+    setCookie(
+      res,
+      "refresh_token",
+      jwt.sign(
+        { id: user.id, role: "admin" },
+        process.env.REFRESH_TOKEN_SECRET as string,
+        { expiresIn: "7d" }
+      )
+    );
+
+    res.status(200).json({
+      message: "Login successful!",
+      user: { id: user.id, email: user.email, name: user.name, role: "ADMIN" },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+function sendLog(arg0: { type: string; message: string; source: string }) {
+  throw new Error("Function not implemented.");
+}
+// interface LogEntry {
+//   type: "error" | "success" | "warning" | "info";
+//   message: string;
+//   source: string;
+//   timestamp?: Date;
+//   metadata?: Record<string, any>;
+// }
+
+// const sendLog = (logEntry: LogEntry) => {
+//   const log = {
+//     ...logEntry,
+//     timestamp: new Date(),
+//     level: logEntry.type,
+//   };
+
+//   // // Send to logging service (e.g., Winston, Bunyan, or external service)
+//   // logger.log(log.level, log.message, {
+//   //   source: log.source,
+//   //   timestamp: log.timestamp,
+//   //   ...log.metadata,
+//   // });
+// };
