@@ -574,3 +574,91 @@ export const updateDeliveryStatus = async (
     return next(error);
   }
 };
+
+//verify coupon code
+export const verifyCouponCode = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { couponCode, cart } = req.body;
+
+    if (!couponCode || !cart || cart.length === 0) {
+      return next(new ValidationError("Coupon code and cart are required!"));
+    }
+
+    //fetch the disount code
+    const discount = await prisma.discount_codes.findUnique({
+      where: { discountCode: couponCode },
+    });
+
+    if (!discount) {
+      return next(new ValidationError("Coupon code isn't valid!"));
+    }
+
+    //finding matching product that includes this discount code
+    const matchingProduct = cart.find((item: any) =>
+      item.discount_codes?.some((d: any) => d === discount.id)
+    );
+
+    if (!matchingProduct) {
+      return res.status(200).json({
+        valid: false,
+        discount: 0,
+        discountAmount: 0,
+        message: "No matching product found in cart for this coupon!",
+      });
+    }
+
+    let discountAmount = 0;
+    const price = matchingProduct.sale_price * matchingProduct.quantity;
+
+    if (discount.discountType === "percentage") {
+      discountAmount = (price * discount.discountValue) / 100;
+    } else if (discount.discountType === "flat") {
+      discountAmount = discount.discountValue;
+    }
+
+    discountAmount = Math.min(discountAmount, price);
+
+    res.status(200).json({
+      valid: true,
+      discount: discount.discountValue,
+      discountAmount: discountAmount.toFixed(2),
+      discountedPrductId: matchingProduct.id,
+      discountType: discount.discountType,
+      message: "Discount applied to eligible products.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//get user orders
+export const getUserOrders = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const orders = await prisma.orders.findMany({
+      where: {
+        userId: req.user.id,
+      },
+      include: {
+        items: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

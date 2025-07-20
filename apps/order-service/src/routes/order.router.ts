@@ -5,7 +5,9 @@ import {
   createPaymentSession,
   getOrderDetails,
   getSellerOrders,
+  getUserOrders,
   updateDeliveryStatus,
+  verifyCouponCode,
   verifyingPaymentSession,
 } from "../controllers/order.controller";
 import { isSeller } from "../../../../packages/middleware/authorizeRole";
@@ -27,5 +29,7 @@ router.put(
   isSeller,
   updateDeliveryStatus
 );
+router.put("/verify-coupon", isAuthenticated, verifyCouponCode);
+router.put("/get-user-orders", isAuthenticated, getUserOrders);
 
 export default router;

@@ -1,11 +1,13 @@
 "use client";
-import useUser from "@/hooks/useUser";
+import useRequireAuth from "@/hooks/useRequiredAuth";
 import QuickActionCard from "@/shared/components/cards/quick-action-card";
 import StatCard from "@/shared/components/cards/stat-card";
+import ChangePassword from "@/shared/components/change-password";
 import NavItem from "@/shared/components/nav-items";
 import ShippingAddressSection from "@/shared/components/shippingAddress";
+import OrdersTable from "@/shared/components/tables/orders-table";
 import axiosInstance from "@/utils/axiosInstance";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BadgeCheck,
   BellDot,
@@ -34,7 +36,24 @@ const Page = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useRequireAuth();
+  const { data: orders = [] } = useQuery({
+    queryKey: ["user-orders"],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/order/api/get-user-orders`);
+      return res.data.orders;
+    },
+  });
+  const totalOrders = orders.length;
+
+  const processingOrders = orders.filter(
+    (o: any) =>
+      o?.deliveryStatus !== "Delivered" && o?.deliveryStatus !== "Cancelled"
+  ).length;
+  const completedOrders = orders.filter(
+    (o: any) => o?.deliveryStatus === "Delivered"
+  ).length;
+
   const queryTab = searchParams.get("active") || "Profile";
   const [activeTab, setActiveTab] = useState(queryTab);
 
@@ -74,9 +93,17 @@ const Page = () => {
 
         {/* Profile Overview Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <StatCard title="Total Orders" count={13} Icon={Clock} />
-          <StatCard title="Processing Orders" count={3} Icon={Truck} />
-          <StatCard title="Completed Orders" count={4} Icon={CheckCircle} />
+          <StatCard title="Total Orders" count={totalOrders} Icon={Clock} />
+          <StatCard
+            title="Processing Orders"
+            count={processingOrders}
+            Icon={Truck}
+          />
+          <StatCard
+            title="Completed Orders"
+            count={completedOrders}
+            Icon={CheckCircle}
+          />
         </div>
 
         {/* Sidebar and content layout */}
@@ -167,8 +194,12 @@ const Page = () => {
               </div>
             ) : activeTab === "Shipping Address" ? (
               <ShippingAddressSection />
+            ) : activeTab === "My Orders" ? (
+              <OrdersTable />
+            ) : activeTab === "Change Password" ? (
+              <ChangePassword />
             ) : (
-              ""
+              <></>
             )}
           </div>
           {/* Right quick panel */}
