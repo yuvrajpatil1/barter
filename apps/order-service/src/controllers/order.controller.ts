@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import Stripe from "stripe";
-import { ValidationError } from "../../../../packages/error-handler";
+import {
+  NotFoundError,
+  ValidationError,
+} from "../../../../packages/error-handler";
 import redis from "../../../../packages/libs/redis";
 import prisma from "../../../../packages/libs/prisma";
 import crypto from "crypto";
@@ -403,6 +406,171 @@ export const createOrder = async (
     res.status(200).json({ received: true });
   } catch (error) {
     console.log(error);
+    return next(error);
+  }
+};
+
+//get seller orders
+export const getSellerOrders = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const shop = await prisma.shops.findUnique({
+      where: {
+        sellerId: req.seller.id,
+      },
+    });
+
+    //fetch all orders for this shop
+    const orders = await prisma.orders.findMany({
+      where: {
+        shopId: shop?.id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//get order details
+export const getOrderDetails = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const orderId = req.params.id;
+
+    const order = await prisma.orders.findUnique({
+      where: {
+        id: orderId,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      return next(new NotFoundError("Order not found with the id!"));
+    }
+
+    const shippingAddress = order.shippingAddressId
+      ? await prisma.address.findUnique({
+          where: { id: order?.shippingAddressId },
+        })
+      : null;
+
+    const coupon = order.couponCode
+      ? await prisma.discount_codes.findUnique({
+          where: {
+            discountCode: order.couponCode,
+          },
+        })
+      : null;
+
+    //fetch all product details in one go
+    const productIds = order.items.map((item) => item.productId);
+
+    const products = await prisma.products.findMany({
+      where: {
+        id: { in: productIds },
+      },
+      select: {
+        id: true,
+        title: true,
+        images: true,
+      },
+    });
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const items = order.items.map((item) => ({
+      ...item,
+      selectedOptions: item.selectedOptions,
+      product: productMap.get(item.productId) || null,
+    }));
+
+    res.status(200).json({
+      success: true,
+      order: {
+        ...order,
+        items,
+        shippingAddress,
+        couponCode: coupon,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//update order status
+export const updateDeliveryStatus = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { orderId } = req.params;
+    const { deliveryStatus } = req.body;
+
+    if (!orderId || !deliveryStatus) {
+      return res
+        .status(400)
+        .json({ error: "Missing order ID or delivery status." });
+    }
+
+    const allowedStatuses = [
+      "Ordered",
+      "Packed",
+      "Shipped",
+      "Out For Delivery",
+      "Delivered",
+    ];
+
+    if (!allowedStatuses.includes(deliveryStatus)) {
+      return next(new ValidationError("Invalid delivery status."));
+    }
+
+    const existingOrder = await prisma.orders.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!existingOrder) {
+      return next(new NotFoundError("Order not found!"));
+    }
+
+    const updatedOrder = await prisma.orders.update({
+      where: { id: orderId },
+      data: { deliveryStatus, updatedAt: new Date() },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Delivery status updated successfully.",
+      order: updatedOrder,
+    });
+  } catch (error) {
     return next(error);
   }
 };
