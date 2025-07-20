@@ -269,4 +269,5 @@ model notifications {
   receiverId    String
   redirect_link String?
   title         String
+  message       String?
 }

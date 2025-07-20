@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const CartPage = () => {
   const router = useRouter();
@@ -23,6 +24,24 @@ const CartPage = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponCode, setCouponCode] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState("");
+
+  const createPaymentSession = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post("order/api/create-payment-session", {
+        cart,
+        selectedAddressId,
+        coupon: {},
+      });
+
+      const sessionId = res.data.sessionId;
+      router.push(`/checkout?sessionId=${sessionId}`);
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const removeFromCart = useStore((state: any) => state.removeFromCart);
   const [loading, setLoading] = useState(false);
@@ -57,7 +76,7 @@ const CartPage = () => {
   const { data: addresses = [] } = useQuery({
     queryKey: ["shipping-addresses"],
     queryFn: async () => {
-      const res = await axiosInstance.get("/user/api/shipping-addresses");
+      const res = await axiosInstance.get("/api/shipping-addresses");
       return res.data.addresses;
     },
   });
@@ -280,6 +299,7 @@ const CartPage = () => {
                 </div>
 
                 <button
+                  onClick={createPaymentSession}
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 cursor-pointer mt-4 py-3 bg-gray-900 text-white hover:bg-blue-500 rounded transition-all"
                 >

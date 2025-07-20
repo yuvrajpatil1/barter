@@ -10,7 +10,8 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
   },
   "include": [
-    "src/**/*.ts", "../../packages/**/*.ts"
+    "src/**/*.ts",
+    "../../packages/**/*.ts"
   ],
   "exclude": []
 }
