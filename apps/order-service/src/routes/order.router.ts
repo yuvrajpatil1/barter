@@ -3,6 +3,7 @@ import isAuthenticated from "../../../../packages/middleware/isAuthenticated";
 import {
   createPaymentIntent,
   createPaymentSession,
+  getAdminOrders,
   getOrderDetails,
   getSellerOrders,
   getUserOrders,
@@ -10,7 +11,10 @@ import {
   verifyCouponCode,
   verifyingPaymentSession,
 } from "../controllers/order.controller";
-import { isSeller } from "../../../../packages/middleware/authorizeRole";
+import {
+  isAdmin,
+  isSeller,
+} from "../../../../packages/middleware/authorizeRole";
 
 const router: Router = express.Router();
 
@@ -31,5 +35,12 @@ router.put(
 );
 router.put("/verify-coupon", isAuthenticated, verifyCouponCode);
 router.put("/get-user-orders", isAuthenticated, getUserOrders);
+router.put(
+  "/get-admin-orders",
+  isAuthenticated,
+  isAuthenticated,
+  isAdmin,
+  getAdminOrders
+);
 
 export default router;

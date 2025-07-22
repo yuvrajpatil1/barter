@@ -182,12 +182,12 @@ model products {
 
 model userAnalytics {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @unique @db.ObjectId
+  userId          String   @unique
   country         String?
   city            String?
   device          String?
-  actions         Json // Array of user actions
   lastVisited     DateTime @default(now())
+  actions         Json? // Array of user actions
   recommendations Json?
   lastTrained     DateTime @default(now())
 

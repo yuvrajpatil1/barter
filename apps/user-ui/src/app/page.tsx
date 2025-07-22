@@ -16,9 +16,9 @@ function Page() {
     queryKey: ["products"],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        "/product/api/get-all-products?page=1&limit=10"
+        "/recommendation/api/get-recommended-products"
       );
-      return res.data.products;
+      return res.data.recommendations;
     },
     staleTime: 1000 * 60 * 2,
   });
