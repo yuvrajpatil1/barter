@@ -35,6 +35,12 @@
     },
     {
       "path": "./apps/recommendation-service"
+    },
+    {
+      "path": "./apps/chatting-service"
+    },
+    {
+      "path": "./apps/logger-service"
     }
   ]
 }
