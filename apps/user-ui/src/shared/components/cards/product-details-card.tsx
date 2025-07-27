@@ -14,6 +14,8 @@ import { useStore } from "@/store";
 import useDeviceTracking from "@/hooks/useDeviceTracking";
 import useUser from "@/hooks/useUser";
 import useLocationTracking from "@/hooks/useLocationTracking";
+import axiosInstance from "@/utils/axiosInstance";
+import { isProtected } from "@/utils/protected";
 
 const ProductDetailsCard = ({
   data,
@@ -26,6 +28,7 @@ const ProductDetailsCard = ({
   const [isSelected, setIsSelected] = useState(data?.colors?.[0] || "");
   const [isSizeSelected, setIsSizeSelected] = useState(data?.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { user } = useUser();
   const location = useLocationTracking();
@@ -43,6 +46,26 @@ const ProductDetailsCard = ({
   estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
 
   const router = useRouter();
+
+  const handleChat = async () => {
+    if (isLoading) {
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const res = await axiosInstance.post(
+        "/chatting/api/create-user-conversationGroup",
+        { sellerId: data?.Shop?.sellerId },
+        isProtected
+      );
+      router.push(`/inbox?conversationId=${res.data.conversation.id}`);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div
       className="fixed flex items-center justify-center top-0 left-0 h-screen w-full bg-gray-900/30 z-50"
@@ -107,10 +130,7 @@ const ProductDetailsCard = ({
                   </Link>
 
                   <span className="block mt-1">
-                    <Ratings
-                      rating={data?.Shop?.ratings}
-                      ratingCount={data?.Shop?.rating}
-                    />
+                    <Ratings rating={data?.Shop?.ratings} />
                   </span>
 
                   <p className="text-gray-600 mt-1 flex items-center gap-2">
@@ -121,7 +141,7 @@ const ProductDetailsCard = ({
               </div>
               <button
                 className="flex cursor-pointer items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white"
-                onClick={() => router.push(`/inbox?shopId=${data?.shop?.id}`)}
+                onClick={() => handleChat()}
               >
                 <MessageCircleMore /> Chat with Seller
               </button>

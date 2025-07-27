@@ -29,6 +29,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
     "ejs": "^3.1.10",
+    "emoji-picker-react": "^4.13.2",
     "express": "^4.21.2",
     "express-rate-limit": "^8.0.1",
     "file-saver": "^2.0.5",
@@ -60,6 +61,7 @@
     "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.1",
     "ua-parser-js": "^2.0.4",
+    "ws": "^8.18.3",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
