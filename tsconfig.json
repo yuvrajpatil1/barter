@@ -41,6 +41,12 @@
     },
     {
       "path": "./apps/logger-service"
+    },
+    {
+      "path": "./seller-service"
+    },
+    {
+      "path": "./apps/seller-service"
     }
   ]
 }

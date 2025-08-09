@@ -416,16 +416,18 @@ model shops {
 }
 
 model sellers {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  email        String   @unique
+  email        String    @unique
   phone_number String
   country      String
   password     String
   stripeId     String?
   shop         shops?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model site_config {
@@ -565,12 +567,15 @@ model orderItems {
 }
 
 model notifications {
-  id            String  @id @default(auto()) @map("_id") @db.ObjectId
-  creatorId     String  @db.ObjectId
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  creatorId     String   @db.ObjectId
   receiverId    String
   redirect_link String?
   title         String
   message       String?
+  status        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // Improved conversation models

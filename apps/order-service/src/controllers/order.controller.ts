@@ -271,7 +271,7 @@ export const createOrder = async (
         }
 
         //create ordr
-        await prisma.orders.create({
+        const order = await prisma.orders.create({
           data: {
             userId,
             shopId,
@@ -359,7 +359,7 @@ export const createOrder = async (
             totalAmount: coupon?.discountAmount
               ? totalAmount - coupon?.discountAmount
               : totalAmount,
-            trackingUrl: `https://barter.om/order/${sessionId}`,
+            trackingUrl: `/order/${order.id}`,
           }
         );
 

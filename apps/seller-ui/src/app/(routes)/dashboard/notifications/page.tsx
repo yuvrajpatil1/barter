@@ -1,14 +1,14 @@
 "use client";
-import axiosInstance from "@/shared/utils/axiosInstance";
+import axiosInstance from "@/app/utils/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import React, { useState } from "react";
 
-const Notifications = () => {
+const Page = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
-      const res = await axiosInstance.get("/admin/api/get-all-notifications");
+      const res = await axiosInstance.get("/seller/api/seller-notifications");
       return res.data.notifications;
     },
   });
@@ -77,4 +77,4 @@ const Notifications = () => {
   );
 };
 
-export default Notifications;
+export default Page;
