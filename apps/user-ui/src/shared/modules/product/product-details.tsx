@@ -6,6 +6,7 @@ import ProductCard from "@/shared/components/cards/product-card";
 import Ratings from "@/shared/components/ratings/ratings";
 import { useStore } from "@/store";
 import axiosInstance from "@/utils/axiosInstance";
+import { isProtected } from "@/utils/protected";
 import {
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import ReactImageMagnify from "react-image-magnify";
 
@@ -42,6 +44,9 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
     999999,
   ]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  const router = useRouter();
 
   const addToCart = useStore((state: any) => state.addToCart);
   const cart = useStore((state: any) => state.cart);
@@ -96,6 +101,26 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
   useEffect(() => {
     fetchFilteredProducts();
   }, [priceRange]);
+
+  const handleChat = async () => {
+    if (isChatLoading) {
+      return;
+    }
+    setIsChatLoading(true);
+
+    try {
+      const res = await axiosInstance.post(
+        "/chatting/api/create-user-conversationGroup",
+        { sellerId: productDetails?.Shop?.sellerId },
+        isProtected
+      );
+      router.push(`/inbox?conversationId=${res.data.conversation.id}`);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   return (
     <div className="w-full bg-slate-100 py-5">
@@ -349,7 +374,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
             <span className="text-sm text-gray-600">Delivery Options</span>
             <div className="flex items-center text-gray-600 gap-1">
               <MapPin size={18} className="ml-[-5px]" />
-              <span>{location?.city + ", " + location?.country}</span>
+              {/* <span>{location?.city + ", " + location?.country}</span> */}
             </div>
           </div>
           <div className="mb-1 px-3 pb-1 border-b border-b-gray-100">
@@ -382,6 +407,7 @@ const ProductDetails = ({ productDetails }: { productDetails: any }) => {
                 <Link
                   href={"#"}
                   className="text-blue-500 text-sm flex items-center gap-1"
+                  onClick={() => handleChat()}
                 >
                   <MessageSquareText /> Chat Now!
                 </Link>
