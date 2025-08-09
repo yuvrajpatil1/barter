@@ -1,15 +1,37 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { Heart, Search, ShoppingCart, User } from "lucide-react";
 import HeaderBottom from "./header-bottom";
 import useUser from "@/hooks/useUser";
 import { useStore } from "@/store";
+import useLayout from "@/hooks/useLayout";
+import axiosInstance from "@/utils/axiosInstance";
+import Image from "next/image";
 
 function Header() {
   const { user, isLoading } = useUser();
   const wishlist = useStore((state: any) => state.wishlist);
   const cart = useStore((state: any) => state.cart);
+  const { layout } = useLayout();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const handleSearchClick = async () => {
+    if (!searchQuery.trim()) return;
+    setLoadingSuggestions(true);
+    try {
+      const res = await axiosInstance.get(
+        `/product/api/search-products?q=${encodeURIComponent(searchQuery)}`
+      );
+      setSuggestions(res.data.products.slice(0, 10));
+    } catch (error) {
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   return (
     <div className="w-full bg-white">
@@ -17,6 +39,13 @@ function Header() {
         <div>
           <Link href={"/"}>
             <span className="text-3xl font-bold text-red-500">Barter</span>
+            <Image
+              src={layout?.logo}
+              width={300}
+              height={100}
+              alt="logo"
+              className="h-[70px] ml-[-50px] mb-[-20px] object-cover"
+            />
           </Link>
         </div>
         <div className="w-[50%] relative">

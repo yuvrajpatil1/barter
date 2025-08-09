@@ -4,6 +4,7 @@ import {
   createShop,
   createStripeConnectLink,
   deleteUserAddress,
+  getLayoutData,
   getSeller,
   getUser,
   getUserAddresses,
@@ -37,6 +38,7 @@ router.get("/shipping-addresses", isAuthenticated, getUserAddresses);
 router.post("/add-address", isAuthenticated, addUserAddress);
 router.delete("/delete-address/:addressId", isAuthenticated, deleteUserAddress);
 router.get("/update-address", isAuthenticated, updateUserAddress);
+router.get("/get-layouts", getLayoutData);
 
 router.post("/seller-registration", registerSeller);
 router.post("/verify-seller", verifySeller);

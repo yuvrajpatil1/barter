@@ -4,10 +4,11 @@ import Image from "next/image";
 import { MoveRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
+import useLayout from "@/hooks/useLayout";
 
 const Hero = () => {
   const router = useRouter();
-  //   const { layout } = useLayout();
+  const { layout } = useLayout();
 
   return (
     <div className="bg-gray-700 h-[85vh] flex flex-col justify-center w-full">
@@ -32,14 +33,7 @@ const Hero = () => {
           </button>
         </div>
         <div className="md:1/2 flex justify-center">
-          <Image
-            src={
-              "https://ik.imagekit.io/yuvrajkpatil/products/product-1752434301592_nyZXb-rOk.jpg?updatedAt=1752434303446"
-            }
-            alt=""
-            width={450}
-            height={450}
-          />
+          <Image src={layout.banner} alt="" width={450} height={450} />
         </div>
       </div>
     </div>

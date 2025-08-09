@@ -896,3 +896,21 @@ function sendLog(arg0: { type: string; message: string; source: string }) {
 //   //   ...log.metadata,
 //   // });
 // };
+
+//fetch layout data
+export const getLayoutData = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const layout = await prisma.site_config.findFirst();
+
+    res.status(200).json({
+      success: true,
+      layout,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
