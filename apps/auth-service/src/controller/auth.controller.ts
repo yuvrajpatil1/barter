@@ -213,6 +213,12 @@ export const getUser = async (
   try {
     const user = req.user;
 
+    await sendLog({
+      type: "success",
+      message: `User data retrieved ${user?.email}`,
+      source: "auth-service",
+    });
+
     // Check if user exists (middleware should set this)
     if (!user) {
       res.status(401).json({

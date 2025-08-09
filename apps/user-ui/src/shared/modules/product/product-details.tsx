@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Heart,
   MapPin,
-  MessageSquare,
   MessageSquareText,
   Package,
   ShoppingCart,
