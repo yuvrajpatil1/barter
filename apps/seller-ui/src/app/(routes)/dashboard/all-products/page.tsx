@@ -21,7 +21,6 @@ import Link from "next/link";
 import axiosInstance from "@/app/utils/axiosInstance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { headers } from "next/headers";
 import DeleteConfirmationModal from "../../../../../../../packages/components/modals/delete-confirmation-modal";
 
 const fetchProcucts = async () => {
